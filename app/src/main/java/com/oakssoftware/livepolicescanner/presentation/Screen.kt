@@ -1,0 +1,8 @@
+package com.oakssoftware.livepolicescanner.presentation
+
+sealed class Screen (val route: String) {
+    data object HomeScreen : Screen("home_screen")
+    data object StationsScreen : Screen("stations_screen")
+    data object StationDetailScreen : Screen("station_detail_screen")
+    data object AboutUsScreen : Screen("about_us_screen")
+}
