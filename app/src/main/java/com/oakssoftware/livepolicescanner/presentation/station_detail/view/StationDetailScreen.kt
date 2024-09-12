@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -172,48 +173,59 @@ fun StationControlsCard(
 
 @Composable
 fun MediaControlPanel(viewModel: StationDetailViewModel, mediaState: MediaPlayerWrapper.MediaState, station: Station) {
-    Row(
+
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MediaControlButton(R.drawable.baseline_play_24, "Start Button", modifier = Modifier) {
-            val url = "https://broadcastify.cdnstream1.com/${station.uid}"
-            viewModel.onEvent(
-                StationDetailEvent.UpdatePlayer(
-                    StationDetailEvent.MediaPlayerActions.PLAY,
-                    url = url
+        Row(
+            modifier = Modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            MediaControlButton(R.drawable.baseline_play_24, "Start Button", modifier = Modifier) {
+                val url = "https://broadcastify.cdnstream1.com/${station.uid}"
+                viewModel.onEvent(
+                    StationDetailEvent.UpdatePlayer(
+                        StationDetailEvent.MediaPlayerActions.PLAY,
+                        url = url
+                    )
                 )
-            )
-        }
+            }
 
-        MediaControlButton(R.drawable.baseline_pause_24, "Pause Button", modifier = Modifier) {
-            viewModel.onEvent(
-                StationDetailEvent.UpdatePlayer(StationDetailEvent.MediaPlayerActions.PAUSE)
-            )
-        }
+            Spacer(modifier = Modifier.padding(8.dp))
 
-        MediaControlButton(R.drawable.baseline_stop_24, "Stop Button", modifier = Modifier) {
-            viewModel.onEvent(
-                StationDetailEvent.UpdatePlayer(StationDetailEvent.MediaPlayerActions.STOP)
-            )
+            MediaControlButton(R.drawable.baseline_pause_24, "Pause Button", modifier = Modifier) {
+                viewModel.onEvent(
+                    StationDetailEvent.UpdatePlayer(StationDetailEvent.MediaPlayerActions.PAUSE)
+                )
+            }
+
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            MediaControlButton(R.drawable.baseline_stop_24, "Stop Button", modifier = Modifier) {
+                viewModel.onEvent(
+                    StationDetailEvent.UpdatePlayer(StationDetailEvent.MediaPlayerActions.STOP)
+                )
+            }
         }
 
         when (mediaState.mediaPlayerState) {
             MediaPlayerWrapper.MediaPlayerState.IDLE -> {
-
+                InformationText("Idle")
             }
 
             MediaPlayerWrapper.MediaPlayerState.PLAYING -> {
-
+                InformationText("Playing")
             }
 
             MediaPlayerWrapper.MediaPlayerState.PAUSED -> {
-
+                InformationText("Paused")
             }
 
             MediaPlayerWrapper.MediaPlayerState.STOPPED -> {
-
+                InformationText("Stopped")
             }
         }
     }
@@ -236,7 +248,7 @@ fun MediaControlButton(resId: Int, contentDescription: String, modifier: Modifie
 }
 
 @Composable
-fun InformationText(modifier: Modifier = Modifier, text: String) {
+fun InformationText(text: String, modifier: Modifier = Modifier) {
     Text(text = text, modifier = Modifier.then(modifier))
 }
 
