@@ -1,5 +1,7 @@
 package com.oakssoftware.livepolicescanner.presentation.station_detail
 
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
@@ -9,7 +11,6 @@ import com.oakssoftware.livepolicescanner.domain.model.Station
 import com.oakssoftware.livepolicescanner.domain.use_case.get_station_detail.GetStationDetailUseCase
 import com.oakssoftware.livepolicescanner.domain.use_case.get_stations.GetStationsUseCase
 import com.oakssoftware.livepolicescanner.domain.use_case.update_stations.UpdateStationsUseCase
-import com.oakssoftware.livepolicescanner.media.MediaPlayerWrapper
 import com.oakssoftware.livepolicescanner.presentation.ScreenState
 import com.oakssoftware.livepolicescanner.util.Constants
 import com.oakssoftware.livepolicescanner.util.Resource
@@ -29,10 +30,10 @@ class StationDetailViewModel @Inject constructor(
     private val _state = mutableStateOf(StationDetailState())
     val state: State<StationDetailState> = _state
 
-    private val mediaPlayerWrapper = MediaPlayerWrapper()
+    private val _mediaState = mutableStateOf(MediaState(PlayerState.IDLE, false))
+    val mediaPlayerState: State<MediaState> = _mediaState
 
-    private val _mediaPlayerState = mutableStateOf(mediaPlayerWrapper.getCurrentState())
-    val mediaPlayerState: State<MediaPlayerWrapper.MediaState> = _mediaPlayerState
+    private var mediaPlayer: MediaPlayer? = null
 
     init {
         stateHandle.get<String>(Constants.STATION_ID)?.toIntOrNull()?.let { stationId ->
@@ -86,23 +87,45 @@ class StationDetailViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun updateMediaPlayerState() {
-        _mediaPlayerState.value = mediaPlayerWrapper.getCurrentState()
-    }
-
     private fun playMedia(url: String) {
-        mediaPlayerWrapper.playMedia(url)
-        updateMediaPlayerState()
+        if (mediaPlayer == null) {
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build()
+                )
+                setDataSource(url)
+                prepareAsync()
+                setOnPreparedListener {
+                    start()
+                    _mediaState.value = MediaState(PlayerState.PLAYING, true)
+                }
+            }
+        } else {
+            if (_mediaState.value.playerState == PlayerState.PAUSED) {
+                mediaPlayer?.start()
+                _mediaState.value =
+                    MediaState(PlayerState.PAUSED, _mediaState.value.isConnectionEstablished)
+            }
+        }
     }
 
     private fun pauseMedia() {
-        mediaPlayerWrapper.pauseMedia()
-        updateMediaPlayerState()
+        if (_mediaState.value.playerState == PlayerState.PLAYING) {
+            mediaPlayer?.pause()
+            _mediaState.value =
+                MediaState(PlayerState.PAUSED, _mediaState.value.isConnectionEstablished)
+        }
     }
 
     private fun stopMedia() {
-        mediaPlayerWrapper.stopMedia()
-        updateMediaPlayerState()
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
+        _mediaState.value =
+            MediaState(PlayerState.STOPPED, _mediaState.value.isConnectionEstablished)
     }
 
     fun onEvent(event: StationDetailEvent) {

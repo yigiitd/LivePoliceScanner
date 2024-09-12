@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -36,8 +37,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.oakssoftware.livepolicescanner.R
 import com.oakssoftware.livepolicescanner.domain.model.Station
-import com.oakssoftware.livepolicescanner.media.MediaPlayerWrapper
 import com.oakssoftware.livepolicescanner.presentation.ScreenState
+import com.oakssoftware.livepolicescanner.presentation.station_detail.MediaState
+import com.oakssoftware.livepolicescanner.presentation.station_detail.PlayerState
 import com.oakssoftware.livepolicescanner.presentation.station_detail.StationDetailEvent
 import com.oakssoftware.livepolicescanner.presentation.station_detail.StationDetailViewModel
 
@@ -76,7 +78,7 @@ fun StationDetailScreen(
 fun StationDetailsContent(
     station: Station,
     viewModel: StationDetailViewModel,
-    mediaState: MediaPlayerWrapper.MediaState
+    mediaState: MediaState
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -147,7 +149,7 @@ fun StationControlsCard(
     station: Station,
     viewModel: StationDetailViewModel,
     modifier: Modifier,
-    mediaState: MediaPlayerWrapper.MediaState
+    mediaState: MediaState
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -172,13 +174,23 @@ fun StationControlsCard(
 }
 
 @Composable
-fun MediaControlPanel(viewModel: StationDetailViewModel, mediaState: MediaPlayerWrapper.MediaState, station: Station) {
+fun MediaControlPanel(viewModel: StationDetailViewModel, mediaState: MediaState, station: Station) {
 
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        when (mediaState.isConnectionEstablished) {
+            true -> {
+                InformationText("Connection established", color = Color.Green)
+            }
+
+            false -> {
+                InformationText("Press play to connect")
+            }
+        }
+
         Row(
             modifier = Modifier,
             verticalAlignment = Alignment.CenterVertically,
@@ -211,20 +223,20 @@ fun MediaControlPanel(viewModel: StationDetailViewModel, mediaState: MediaPlayer
             }
         }
 
-        when (mediaState.mediaPlayerState) {
-            MediaPlayerWrapper.MediaPlayerState.IDLE -> {
+        when (mediaState.playerState) {
+            PlayerState.IDLE -> {
                 InformationText("Idle")
             }
 
-            MediaPlayerWrapper.MediaPlayerState.PLAYING -> {
+            PlayerState.PLAYING -> {
                 InformationText("Playing")
             }
 
-            MediaPlayerWrapper.MediaPlayerState.PAUSED -> {
+            PlayerState.PAUSED -> {
                 InformationText("Paused")
             }
 
-            MediaPlayerWrapper.MediaPlayerState.STOPPED -> {
+            PlayerState.STOPPED -> {
                 InformationText("Stopped")
             }
         }
@@ -248,8 +260,8 @@ fun MediaControlButton(resId: Int, contentDescription: String, modifier: Modifie
 }
 
 @Composable
-fun InformationText(text: String, modifier: Modifier = Modifier) {
-    Text(text = text, modifier = Modifier.then(modifier))
+fun InformationText(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurface) {
+    Text(text = text, modifier = Modifier.then(modifier), color = color)
 }
 
 @Composable
