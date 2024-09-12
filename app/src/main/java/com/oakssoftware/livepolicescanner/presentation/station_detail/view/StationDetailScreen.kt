@@ -154,14 +154,15 @@ fun StationDetailScreen(
                                             shape = AbsoluteRoundedCornerShape(216.dp),
                                             onClick = {
                                                 viewModel.onEvent(
-                                                    StationDetailEvent.UpdatePlayState(
-                                                        true
+                                                    StationDetailEvent.UpdatePlayer(
+                                                        StationDetailEvent.MediaPlayer.PLAY,
+                                                        url = "https://broadcastify.cdnstream1.com/${station.uid}"
                                                     )
                                                 )
                                             }) {
                                             Icon(
                                                 imageVector = Icons.Default.PlayArrow,
-                                                contentDescription = "Favorite Stations",
+                                                contentDescription = "Play Button",
                                                 modifier = Modifier.size(32.dp)
                                             )
                                         }
@@ -172,14 +173,32 @@ fun StationDetailScreen(
                                             shape = AbsoluteRoundedCornerShape(216.dp),
                                             onClick = {
                                                 viewModel.onEvent(
-                                                    StationDetailEvent.UpdatePlayState(
-                                                        false
+                                                    StationDetailEvent.UpdatePlayer(
+                                                        StationDetailEvent.MediaPlayer.PAUSE
+                                                    )
+                                                )
+                                            }) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.baseline_pause_24),
+                                                contentDescription = "Pause Button",
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.padding(8.dp))
+
+                                        FloatingActionButton(
+                                            shape = AbsoluteRoundedCornerShape(216.dp),
+                                            onClick = {
+                                                viewModel.onEvent(
+                                                    StationDetailEvent.UpdatePlayer(
+                                                        StationDetailEvent.MediaPlayer.STOP
                                                     )
                                                 )
                                             }) {
                                             Icon(
                                                 painter = painterResource(R.drawable.baseline_stop_24),
-                                                contentDescription = "Favorite Stations",
+                                                contentDescription = "Stop Button",
                                                 modifier = Modifier.size(32.dp)
                                             )
                                         }
@@ -188,6 +207,8 @@ fun StationDetailScreen(
                             }
                         }
                     }
+
+                    val url = "https://broadcastify.cdnstream1.com/${station.uid}"
                 } else {
                     Text(
                         "There was an error with getting the station",

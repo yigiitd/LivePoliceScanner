@@ -8,5 +8,4 @@ data class StationDetailState(
     val station: Station? = null,
     val favoriteStations: List<Station> = emptyList(),
     val errorMessage: String? = "",
-    val isPlaying: Boolean = false
 )

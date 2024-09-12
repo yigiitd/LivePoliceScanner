@@ -28,6 +28,11 @@ class StationDetailViewModel @Inject constructor(
     private val _state = mutableStateOf(StationDetailState())
     val state: State<StationDetailState> = _state
 
+    private val mediaPlayerWrapper = MediaPlayerWrapper()
+
+    private val _mediaPlayerState = mutableStateOf(mediaPlayerWrapper.getCurrentState())
+    val mediaPlayerState: State<MediaPlayerWrapper.MediaPlayerState> = _mediaPlayerState
+
     init {
         val stationId = stateHandle.get<String>(Constants.STATION_ID)
         when {
@@ -41,8 +46,7 @@ class StationDetailViewModel @Inject constructor(
                     screenState = ScreenState.Error,
                     station = null,
                     favoriteStations = _state.value.favoriteStations,
-                    errorMessage = "Error getting station detail",
-                    isPlaying = false
+                    errorMessage = "Error getting station detail"
                 )
             }
         }
@@ -54,24 +58,21 @@ class StationDetailViewModel @Inject constructor(
                 screenState = _state.value.screenState,
                 station = _state.value.station,
                 favoriteStations = resource.data ?: emptyList(),
-                errorMessage = resource.message,
-                isPlaying = _state.value.isPlaying
+                errorMessage = resource.message
             )
 
             is Resource.Loading -> StationDetailState(
                 screenState = _state.value.screenState,
                 station = _state.value.station,
                 favoriteStations = emptyList(),
-                errorMessage = resource.message,
-                isPlaying = _state.value.isPlaying
+                errorMessage = resource.message
             )
 
             is Resource.Error -> StationDetailState(
                 screenState = _state.value.screenState,
                 station = _state.value.station,
                 favoriteStations = emptyList(),
-                errorMessage = resource.message,
-                isPlaying = _state.value.isPlaying
+                errorMessage = resource.message
             )
         }
     }
@@ -82,24 +83,21 @@ class StationDetailViewModel @Inject constructor(
                 screenState = ScreenState.Success,
                 station = resource.data,
                 favoriteStations = _state.value.favoriteStations,
-                errorMessage = resource.message,
-                isPlaying = _state.value.isPlaying
+                errorMessage = resource.message
             )
 
             is Resource.Loading -> StationDetailState(
                 screenState = ScreenState.Loading,
                 station = null,
                 favoriteStations = _state.value.favoriteStations,
-                errorMessage = resource.message,
-                isPlaying = _state.value.isPlaying
+                errorMessage = resource.message
             )
 
             is Resource.Error -> StationDetailState(
                 screenState = ScreenState.Error,
                 station = null,
                 favoriteStations = _state.value.favoriteStations,
-                errorMessage = resource.message,
-                isPlaying = _state.value.isPlaying
+                errorMessage = resource.message
             )
         }
     }
@@ -122,20 +120,33 @@ class StationDetailViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    private fun playMedia(url: String) {
+        mediaPlayerWrapper.play(url)
+        _mediaPlayerState.value = mediaPlayerWrapper.getCurrentState()
+    }
+
+    private fun pauseMedia() {
+        mediaPlayerWrapper.pause()
+        _mediaPlayerState.value = mediaPlayerWrapper.getCurrentState()
+    }
+
+    private fun stopMedia() {
+        mediaPlayerWrapper.stop()
+        _mediaPlayerState.value = mediaPlayerWrapper.getCurrentState()
+    }
+
     fun onEvent(event: StationDetailEvent) {
         when (event) {
             is StationDetailEvent.UpdateStation -> {
                 updateStation(event.station)
             }
 
-            is StationDetailEvent.UpdatePlayState -> {
-                _state.value = StationDetailState(
-                    screenState = _state.value.screenState,
-                    station = _state.value.station,
-                    favoriteStations = _state.value.favoriteStations,
-                    errorMessage = _state.value.errorMessage,
-                    isPlaying = event.isPlaying
-                )
+            is StationDetailEvent.UpdatePlayer -> {
+                when (event.player) {
+                    StationDetailEvent.MediaPlayer.PLAY -> playMedia(event.url!!)
+                    StationDetailEvent.MediaPlayer.PAUSE -> pauseMedia()
+                    StationDetailEvent.MediaPlayer.STOP -> stopMedia()
+                }
             }
         }
     }
