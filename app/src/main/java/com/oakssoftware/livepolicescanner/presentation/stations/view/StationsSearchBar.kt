@@ -32,59 +32,26 @@ fun StationsSearchBar(
     onSearch: (String) -> Unit = {},
     onCloseClicked: () -> Unit = {}
 ) {
-    var isHintDisplayed by remember {
-        mutableStateOf(hint != "")
-    }
-
     TextField(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, start = 4.dp, end = 4.dp)
-            .onFocusChanged {
-                isHintDisplayed = it.isFocused != true && searchText.isEmpty()
-            },
+            .padding(16.dp),
         value = searchText,
-        onValueChange = {
-            onSearch(it)
-        },
-        placeholder = {
-            Text(
-                text = "Search here...",
-            )
-        },
+        onValueChange = onSearch,
+        placeholder = { Text(text = hint) },
         textStyle = MaterialTheme.typography.bodyMedium,
         singleLine = true,
         leadingIcon = {
-            IconButton(
-                onClick = {
-                    onCloseClicked()
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close Icon",
-                )
+            IconButton(onClick = onCloseClicked) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = "Close Icon")
             }
         },
         trailingIcon = {
-            IconButton(
-                onClick = {
-                    onSearch(searchText)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Icon",
-                )
+            IconButton(onClick = { onSearch(searchText) }) {
+                Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
             }
         },
-        keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Send
-        ),
-        keyboardActions = KeyboardActions(
-            onSend = {
-                onSearch(searchText)
-            }
-        )
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onSearch(searchText) })
     )
 }

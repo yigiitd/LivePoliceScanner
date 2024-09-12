@@ -27,96 +27,62 @@ class StationsViewModel @Inject constructor(
     private val updateStationsUseCase: UpdateStationsUseCase
 ) : ViewModel() {
 
-    private val _state =
-        mutableStateOf(StationsState())
+    private val _state = mutableStateOf(StationsState())
     val state: State<StationsState> = _state
 
-    private var job: Job? = null
+    private var searchJob: Job? = null
 
     init {
-        getStations(isSearching = false, search = "")
+        getStations(isSearching = false, searchQuery = "")
     }
 
-    private fun handleResource(resource: Resource<List<Station>>) {
-        _state.value = when (resource) {
-            is Resource.Success -> StationsState(
-                screenState = ScreenState.Success,
-                stations = resource.data ?: emptyList(),
-                isFavoritesOpen = _state.value.isFavoritesOpen,
-            )
-
-            is Resource.Loading -> StationsState(
-                screenState = ScreenState.Loading,
-                isFavoritesOpen = _state.value.isFavoritesOpen
-            )
-
-            is Resource.Error -> StationsState(
-                screenState = ScreenState.Error,
-                errorMessage = resource.message ?: "Error!",
-                isFavoritesOpen = _state.value.isFavoritesOpen,
-            )
-        }
+    private fun handleStationsResource(resource: Resource<List<Station>>) {
+        _state.value = state.value.copy(
+            screenState = when (resource) {
+                is Resource.Success -> ScreenState.Success
+                is Resource.Loading -> ScreenState.Loading
+                is Resource.Error -> ScreenState.Error
+            },
+            stations = resource.data ?: emptyList(),
+            errorMessage = resource.message ?: "Error!"
+        )
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    private fun getStations(isSearching: Boolean, search: String) {
-        job?.cancel()
-
-        job = flow { emit(search) }
+    private fun getStations(isSearching: Boolean, searchQuery: String) {
+        searchJob?.cancel()
+        searchJob = flow { emit(searchQuery) }
             .flatMapLatest { query ->
                 if (isSearching) delay(300)
                 getStationsUseCase.executeGetStations(
                     isSearching,
                     query,
-                    _state.value.isFavoritesOpen
+                    state.value.isFavoritesOpen
                 )
             }
-            .onEach { handleResource(it) }
+            .onEach { handleStationsResource(it) }
             .launchIn(viewModelScope)
     }
 
     private fun updateStation(station: Station) {
-        updateStationsUseCase.executeUpdateStation(station).onEach { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    val updatedStations = _state.value.stations.mapNotNull {
-                        if (it.uid == station.uid) {
-                            if (!_state.value.isFavoritesOpen) station else null
-                        } else {
-                            it
-                        }
+        updateStationsUseCase.executeUpdateStation(station)
+            .onEach { resource ->
+                if (resource is Resource.Success) {
+                    val updatedStations = state.value.stations.map {
+                        if (it.uid == station.uid && !state.value.isFavoritesOpen) station else it
                     }
-                    _state.value = _state.value.copy(stations = updatedStations)
-                }
-
-                is Resource.Loading -> {
-
-                }
-
-                is Resource.Error -> {
-
+                    _state.value = state.value.copy(stations = updatedStations)
                 }
             }
-        }.launchIn(viewModelScope)
+            .launchIn(viewModelScope)
     }
 
     fun onEvent(event: StationsEvent) {
         when (event) {
-            is StationsEvent.GetStations -> {
-                getStations(event.isSearching, event.search)
-            }
-
-            is StationsEvent.UpdateStation -> {
-                updateStation(event.station)
-            }
-
+            is StationsEvent.GetStations -> getStations(event.isSearching, event.search)
+            is StationsEvent.UpdateStation -> updateStation(event.station)
             is StationsEvent.ToggleFavorites -> {
-                _state.value = StationsState(
-                    screenState = _state.value.screenState,
-                    stations = _state.value.stations,
-                    errorMessage = _state.value.errorMessage,
-                    isFavoritesOpen = !_state.value.isFavoritesOpen
-                )
+                _state.value = state.value.copy(isFavoritesOpen = !state.value.isFavoritesOpen)
                 getStations(event.isSearching, event.search)
             }
         }

@@ -1,11 +1,11 @@
-package com.oakssoftware.livepolicescanner.presentation.station_detail
+package com.oakssoftware.livepolicescanner.media
 
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 
 class MediaPlayerWrapper {
     private var mediaPlayer: MediaPlayer? = null
-    private var currentState = MediaPlayerState.IDLE
+    private var currentState = MediaState(MediaPlayerState.IDLE, false)
 
     enum class MediaPlayerState {
         IDLE,
@@ -14,7 +14,12 @@ class MediaPlayerWrapper {
         STOPPED
     }
 
-    fun play(url: String) {
+    data class MediaState(
+        val mediaPlayerState: MediaPlayerState,
+        val isConnectionEstablished: Boolean
+    )
+
+    fun playMedia(url: String) {
         if (mediaPlayer == null) {
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
@@ -27,30 +32,33 @@ class MediaPlayerWrapper {
                 prepareAsync()
                 setOnPreparedListener {
                     start()
-                    currentState = MediaPlayerState.PLAYING
+                    currentState = currentState.copy(
+                        mediaPlayerState = MediaPlayerState.PLAYING,
+                        isConnectionEstablished = true
+                    )
                 }
             }
         } else {
-            if (currentState == MediaPlayerState.PAUSED) {
+            if (currentState.mediaPlayerState == MediaPlayerState.PAUSED) {
                 mediaPlayer?.start()
-                currentState = MediaPlayerState.PLAYING
+                currentState = currentState.copy(mediaPlayerState = MediaPlayerState.PLAYING)
             }
         }
     }
 
-    fun pause() {
-        if (currentState == MediaPlayerState.PLAYING) {
+    fun pauseMedia() {
+        if (currentState.mediaPlayerState == MediaPlayerState.PLAYING) {
             mediaPlayer?.pause()
-            currentState = MediaPlayerState.PAUSED
+            currentState = currentState.copy(mediaPlayerState = MediaPlayerState.PAUSED)
         }
     }
 
-    fun stop() {
+    fun stopMedia() {
         mediaPlayer?.stop()
         mediaPlayer?.release()
         mediaPlayer = null
-        currentState = MediaPlayerState.STOPPED
+        currentState = currentState.copy(mediaPlayerState = MediaPlayerState.STOPPED)
     }
 
-    fun getCurrentState(): MediaPlayerState = currentState
+    fun getCurrentState(): MediaState = currentState
 }

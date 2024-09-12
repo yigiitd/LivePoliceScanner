@@ -6,3 +6,9 @@ sealed class Screen (val route: String) {
     data object StationDetailScreen : Screen("station_detail_screen")
     data object AboutUsScreen : Screen("about_us_screen")
 }
+
+sealed class ScreenState{
+    data object Success : ScreenState()
+    data object Loading : ScreenState()
+    data object Error : ScreenState()
+}
